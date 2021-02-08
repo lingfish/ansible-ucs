@@ -34,6 +34,9 @@ options:
             admin_vcon:
                 description: Name of the virtual connection
                 choices: ["1","2","3","4","any"]
+            admin_host_port:
+                description: The admin host port
+                choices: ["1","2","any"]
             order:
                 description: vNIC connection order
                 choices: ["unspecified", "0-256"]
@@ -127,7 +130,7 @@ def update_vnic_assignment_order(ucs, vnic, sp):
 
     mo = LsVConAssign(parent_mo_or_dn=sp, admin_vcon=vnic['admin_vcon'],
                       order=vnic['order'], transport=vnic['transport'],
-                      vnic_name=vnic['name'])
+                      vnic_name=vnic['name'], admin_host_port=vnic['admin_host_port'])
     ucs.login_handle.add_mo(mo, True)
     ucs.login_handle.commit()
 
@@ -137,7 +140,7 @@ def remove_vnic_assignment_order(ucs, vnic, sp):
 
     mo = LsVConAssign(parent_mo_or_dn=sp, admin_vcon='any',
                       order='unspecified', transport=vnic['transport'],
-                      vnic_name=vnic['name'])
+                      vnic_name=vnic['name'], admin_host_port='any')
     ucs.login_handle.add_mo(mo, True)
     ucs.login_handle.commit()
 
@@ -159,6 +162,7 @@ def matches_existing_vnic_order(vnic, vnic_mo):
     else:
         kwargs = dict(admin_vcon=vnic['admin_vcon'])
         kwargs['order'] = vnic['order']
+        kwargs['admin_host_port'] = vnic['admin_host_port']
 
     if vnic['transport'] == 'ethernet':
         kwargs['type'] = 'ether'
@@ -171,6 +175,7 @@ def main():
     vnic_spec = dict(
         name=dict(type='str', required=True),
         admin_vcon=dict(type='str', choices=['1', '2', '3', '4', 'any']),
+        admin_host_port=dict(type='str', choices=['1', '2', 'any']),
         order=dict(type='str'),
         transport=dict(type='str', required=True, choices=['ethernet', 'fc']),
         state=dict(type='str', default='present', choices=['present', 'absent']),
